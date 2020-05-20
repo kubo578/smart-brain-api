@@ -12,7 +12,6 @@ const database = {
 	  {
 	  	id: '001',
 	  	name: 'John',
-	  	password: 'John',
 	  	email: 'john@gmail.com',
 	  	entries: 0,
 	  	joined: new Date()
@@ -20,7 +19,6 @@ const database = {
 	  {
 	  	id: '002',
 	  	name: 'Sally',
-	  	password: 'Sally',
 	  	email: 'sally@gmail.com',
 	  	entries: 0,
 	  	joined: new Date()
@@ -57,7 +55,7 @@ app.post('/signin', (req, res) => {
 	if (index == 1) {
    	    bcrypt.compare(password, database.logins[index].hash, function(err, response) {
            if (response == true) {
-            	return res.status(200).json('success');
+            	return res.status(200).json(database.users[2]);
             } else {
             	return res.status(400).json('error loginning in')
             }
@@ -77,16 +75,15 @@ app.post('/register', (req, res) => {
 	   		hash: hash
 	    });
     });
-
-	database.users.push(
-	{
+    let user = {
 	  	id: '003',
 	  	name: name,
 	  	email: email,
 	  	entries: 0,
 	  	joined: new Date()
-	})
-	res.status(200). json('user 003 added');
+    }
+	database.users.push( user )
+	res.status(200). json(user);
 })
 
 app.put('/image/', (req, res) => {
@@ -96,7 +93,7 @@ app.put('/image/', (req, res) => {
     	if (user.id === id) {
     		found = true;
     		user.entries ++;
-    		return res.status(200).json(database.users);
+    		return res.json(user.entries);
      	}
     });
     if (!found) {
