@@ -2,104 +2,41 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt  = require('bcrypt-nodejs');
 const cors = require('cors');
+const knex = require('knex');
+
+const profile = require('./controllers/profile');
+const signin = require('./controllers/signin');
+const register = require('./controllers/register');
+const image = require('./controllers/image');
+
+//127.0.0.1 is local host
+const db = knex({
+  client: 'pg',
+  connection: {
+    host : '127.0.0.1',
+    user : 'postgres',
+    password : '030509',
+    database : 'smart-brain'
+  }
+});
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const database = {
-	users: [
-	  {
-	  	id: '001',
-	  	name: 'John',
-	  	email: 'john@gmail.com',
-	  	entries: 0,
-	  	joined: new Date()
-	  },
-	  {
-	  	id: '002',
-	  	name: 'Sally',
-	  	email: 'sally@gmail.com',
-	  	entries: 0,
-	  	joined: new Date()
-	  }
-	],
-	logins: [
-	{
-		id:'001',
-		hash:'',
-		email:'john@gmail.com'
-	}
-	]
-}
-
-
 app.get('/', (req, res) => {
 	res.send(database.users);
 });
 
-app.get('/profile/:userId', (req, res) => {
-    const { id } = req.params;
-    database.users.forEach( user => {
-    	if (user.id === id){
-    		return res.status(200).json(user)
-    	}
-    })
-    return res.status(400).json("user " + id + " not found!");
-});
+app.get('/profile/:id', (req, res) => { profile.handleProfileGet(req, res, db)});
 
-app.post('/signin', (req, res) => {
-	const { email, password } = req.body;
-	let found = false;
-	let  index = database.logins.findIndex(login => login.email === email)
-	if (index == 1) {
-   	    bcrypt.compare(password, database.logins[index].hash, function(err, response) {
-           if (response == true) {
-            	return res.status(200).json(database.users[2]);
-            } else {
-            	return res.status(400).json('error loginning in')
-            }
-        });
-	} else {
-	    return res.status(400).json('error loginning in')
-	}
-});
+app.post('/signin', (req, res) => { signin.handleSignin(req, res, db, bcrypt)});
 
-app.post('/register', (req, res) => {
-	const { name, email, password } = req.body;
-	bcrypt.hash(password, null, null, function(err, hash) {
-	    database.logins.push(
-	    {
-	   		id: '003',
-	   		email: email,
-	   		hash: hash
-	    });
-    });
-    let user = {
-	  	id: '003',
-	  	name: name,
-	  	email: email,
-	  	entries: 0,
-	  	joined: new Date()
-    }
-	database.users.push( user )
-	res.status(200). json(user);
-})
+app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt )});
 
-app.put('/image/', (req, res) => {
-    const { id } = req.body;
-    let found = false
-    database.users.forEach( user => {
-    	if (user.id === id) {
-    		found = true;
-    		user.entries ++;
-    		return res.json(user.entries);
-     	}
-    });
-    if (!found) {
-       return res.status(400).json("user " + id + " not found!");
-    }
-});
+app.put('/image', (req, res) => { image.handleImage(req, res, db)});
+
+app.post('/imageUrl', (req, res)=> { image.handleApiCall(req, res)})
 
 app.listen (3000, () => {
 	console.log ('app is running on port 3000');
